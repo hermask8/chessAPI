@@ -21,8 +21,10 @@ try
 
     var connectionStrings = new connectionStrings();
     builder.Services.AddOptions();
+    builder.Services.AddControllers();
     builder.Services.Configure<connectionStrings>(builder.Configuration.GetSection("ConnectionStrings"));
     builder.Configuration.GetSection("ConnectionStrings").Bind(connectionStrings);
+    builder.Services.AddControllers().AddNewtonsoftJson();
 
     // Two-stage initialization (https://github.com/serilog/serilog-aspnetcore)
     builder.Host.UseSerilog((context, services, configuration) => configuration.ReadFrom
@@ -38,6 +40,7 @@ try
     var app = builder.Build();
     app.UseSerilogRequestLogging();
     app.UseMiddleware(typeof(chessAPI.customMiddleware<int>));
+    app.MapControllers();
     app.MapGet("/", () =>
     {
         return "hola mundo";
@@ -47,8 +50,9 @@ try
         return "Aca entro a buscar un jugador";
     });
 
-    app.MapPost("player", 
+    app.MapPost("/player", 
     [AllowAnonymous] async(IPlayerBusiness<int> bs, clsNewPlayer newPlayer) => Results.Ok(await bs.addPlayer(newPlayer)));
+
 
     app.Run();
 }
