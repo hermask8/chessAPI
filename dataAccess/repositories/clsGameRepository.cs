@@ -18,8 +18,9 @@ public sealed class clsGameRepository<TI, TC> : clsDataAccess<clsGameEntityModel
 
     public async Task<TI> addGame(clsNewGame game)
     {
+        DateTime date = DateTime.ParseExact(game.started, "dd.M.yyyy HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
         var p = new DynamicParameters();
-        p.Add("STARTED", game.started);
+        p.Add("STARTED", date);
         p.Add("WHITES",game.whites);
         p.Add("BLACKS",game.blacks);
         p.Add("TURN",game.turn);
@@ -55,10 +56,11 @@ public sealed class clsGameRepository<TI, TC> : clsDataAccess<clsGameEntityModel
 
     protected override DynamicParameters fieldsAsParams(clsGameEntityModel<TI, TC> entity)
     {
+        DateTime date = DateTime.ParseExact(entity.started, "dd.M.yyyy HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
         if (entity == null) throw new ArgumentNullException(nameof(entity));
         var p = new DynamicParameters();
         p.Add("ID", entity.id);
-        p.Add("STARTED", entity.started);
+        p.Add("STARTED", date);
         p.Add("WHITES",entity.whites);
         p.Add("BLACKS",entity.blacks);
         p.Add("TURN",entity.turn);
