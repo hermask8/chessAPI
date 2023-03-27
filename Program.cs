@@ -6,6 +6,7 @@ using chessAPI.models.player;
 using Microsoft.AspNetCore.Authorization;
 using Serilog;
 using Serilog.Events;
+using chessAPI.models.game;
 
 //Serilog logger (https://github.com/serilog/serilog-aspnetcore)
 Log.Logger = new LoggerConfiguration()
@@ -53,6 +54,14 @@ try
     app.MapPost("/player", 
     [AllowAnonymous] async(IPlayerBusiness<int> bs, clsNewPlayer newPlayer) => Results.Ok(await bs.addPlayer(newPlayer)));
 
+    #region "Game REST Commands"
+    app.MapPost("/game",
+    [AllowAnonymous] async (IGameBusiness bs, clsNewGame newGame) =>
+    {
+        await bs.startGame(newGame).ConfigureAwait(false);
+        return Results.Ok();
+    });
+    #endregion
 
     app.Run();
 }

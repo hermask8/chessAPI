@@ -1,77 +1,46 @@
-using chessAPI.dataAccess.common;
-using chessAPI.dataAccess.interfaces;
 using chessAPI.dataAccess.models;
 using chessAPI.models.game;
-using Dapper;
+using MongoDB.Bson;
+using MongoDB.Driver;
+
 
 namespace chessAPI.dataAccess.repositores;
 
-public sealed class clsGameRepository<TI, TC> : clsDataAccess<clsGameEntityModel<TI, TC>, TI, TC>, IGameRepository<TI, TC>
-        where TI : struct, IEquatable<TI>
-        where TC : struct
+public sealed class clsGameRepository : IGameRepository
 {
-    public clsGameRepository(IRelationalContext<TC> rkm,
-                               ISQLData queries,
-                               ILogger<clsGameRepository<TI, TC>> logger) : base(rkm, queries, logger)
+    private readonly IMongoCollection<clsGameEntityModel> gameCollection;
+
+    public clsGameRepository(IMongoCollection<clsGameEntityModel> gameCollection)
     {
+        this.gameCollection = gameCollection;
     }
 
-    public async Task<TI> addGame(clsNewGame game)
+    private async Task<long> getLastGame()
     {
-        DateTime date = DateTime.ParseExact(game.started, "dd.M.yyyy HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
-        var p = new DynamicParameters();
-        p.Add("STARTED", date);
-        p.Add("WHITES",game.whites);
-        p.Add("BLACKS",game.blacks);
-        p.Add("TURN",game.turn);
-        p.Add("WINNER",game.winner);
-        return await add<TI>(p).ConfigureAwait(false);
+        //Empty document tells the driver to count all the documents in the collection
+        return await gameCollection.CountDocumentsAsync(new BsonDocument());
     }
 
-    public async Task<IEnumerable<clsGameEntityModel<TI, TC>>> addGames(IEnumerable<clsNewGame> games)
+    public async Task addGame(clsNewGame newGame)
     {
-        var r = new List<clsGameEntityModel<TI, TC>>(games.Count());
-        foreach (var game in games)
+        var newId = await getLastGame().ConfigureAwait(false) + 1;
+        await gameCollection.InsertOneAsync(new clsGameEntityModel(newGame, newId)).ConfigureAwait(false);
+    }
+
+    public async Task<clsGameEntityModel?> getGame(long id)
+    {
+        var filter = Builders<clsGameEntityModel>.Filter.Eq(r => r.id, id);
+        return await gameCollection.Find(filter).FirstOrDefaultAsync().ConfigureAwait(false);
+    }
+
+    public async Task swapTurn(long id)
+    {
+        var gameToSwap = await getGame(id).ConfigureAwait(false);
+        if (gameToSwap != null)
         {
-            TI gameId = await addGame(game).ConfigureAwait(false);
-            r.Add(new clsGameEntityModel<TI, TC>() { id = gameId, started = game.started, whites = game.whites, blacks = game.blacks, turn = game.turn, winner = game.winner });
+            var update = Builders<clsGameEntityModel>.Update.Set(g => g.turn, !gameToSwap.turn);
+            var filter = Builders<clsGameEntityModel>.Filter.Eq(r => r.id, id);
+            await gameCollection.UpdateOneAsync(filter, update);
         }
-        return r;
-    }
-
-    public Task deleteGame(TI id)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<IEnumerable<clsGameEntityModel<TI, TC>>> getGamesByGame(TI gameId)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task updateGame(clsGame<TI> updatedGame)
-    {
-        throw new NotImplementedException();
-    }
-
-    protected override DynamicParameters fieldsAsParams(clsGameEntityModel<TI, TC> entity)
-    {
-        DateTime date = DateTime.ParseExact(entity.started, "dd.M.yyyy HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
-        if (entity == null) throw new ArgumentNullException(nameof(entity));
-        var p = new DynamicParameters();
-        p.Add("ID", entity.id);
-        p.Add("STARTED", date);
-        p.Add("WHITES",entity.whites);
-        p.Add("BLACKS",entity.blacks);
-        p.Add("TURN",entity.turn);
-        p.Add("WINNER",entity.winner);
-        return p;
-    }
-
-    protected override DynamicParameters keyAsParams(TI key)
-    {
-        var p = new DynamicParameters();
-        p.Add("ID", key);
-        return p;
     }
 }

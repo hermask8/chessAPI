@@ -1,20 +1,9 @@
 namespace chessAPI.models.game;
 
-public sealed class clsGame<TI>
-    where TI : struct, IEquatable<TI>
+public sealed class clsGame
 {
-    public clsGame(TI id, string started, int whites, int blacks, bool turn, int winner)
-    {
-        this.id = id;
-        this.started = started;
-        this.whites = whites;
-        this.blacks = blacks;
-        this.turn = turn;
-        this.winner = winner;
-    }
-
-    public TI id { get; set; }
-    public string started { get; set; }
+    public long id { get; set; }
+    public DateTimeOffset started { get; set; }
     public int whites { get; set; }
     public int blacks { get; set; }
     public bool turn { get; set; }

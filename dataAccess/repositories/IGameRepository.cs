@@ -3,13 +3,9 @@ using chessAPI.models.game;
 
 namespace chessAPI.dataAccess.repositores;
 
-public interface IGameRepository<TI, TC>
-        where TI : struct, IEquatable<TI>
-        where TC : struct
+public interface IGameRepository
 {
-    Task<TI> addGame(clsNewGame game);
-    Task<IEnumerable<clsGameEntityModel<TI, TC>>> addGames(IEnumerable<clsNewGame> games);
-    Task<IEnumerable<clsGameEntityModel<TI, TC>>> getGamesByGame(TI gameId);
-    Task updateGame(clsGame<TI> updatedGame);
-    Task deleteGame(TI id);
+    Task addGame(clsNewGame newGame);
+    Task<clsGameEntityModel?> getGame(long id);
+    Task swapTurn(long id);
 }
