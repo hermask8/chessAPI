@@ -44,6 +44,16 @@ namespace chessAPI.Controllers
             return Ok();
         }
 
+        [HttpGet]
+        [Produces("application/json")]
+        [Route("getGame")]
+        [AllowAnonymous]
+        public async Task<IActionResult> getGame(long id)
+        {
+            var gam = await bs.getGame(id);
+            return Ok(gam);
+        }
+
         /*
 
         [HttpGet]
